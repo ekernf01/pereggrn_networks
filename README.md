@@ -2,7 +2,7 @@ Efficiently load and manipulate gene regulatory networks in Python. Built for [o
 
 ### Usage
 
-```{python}
+```python
 import load_networks
 # Set this to point to the "networks" folder in the network collection. 
 load_networks.set_grn_path("path/to/network_collection/networks")
