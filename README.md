@@ -4,8 +4,8 @@ Efficiently load and manipulate gene regulatory networks in Python. Built for [o
 
 ```{python}
 import load_networks
-# Set this to point to the "networks" folder adjacent to this README. 
-os.environ["GRN_PATH"] = "networks"
+# Set this to point to the "networks" folder in the network collection. 
+load_networks.set_grn_path("path/to/network_collection/networks")
 # What networks are available?
 load_networks.load_grn_metadata()
 # What tissues do they cover, or how many?

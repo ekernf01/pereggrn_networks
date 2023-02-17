@@ -1,17 +1,14 @@
-PROJECT_PATH = '/home/ekernf01/Desktop/jhu/research/projects/perturbation_prediction/cell_type_knowledge_transfer/'
 import os
 import unittest
 import pandas as pd
-import scanpy as sc 
 import numpy as np
-os.chdir(PROJECT_PATH + "network_collection")
-
-import sys
-import importlib
-sys.path.append("load_networks")
 import load_networks
-importlib.reload(load_networks)
-os.environ["GRN_PATH"] = "networks"
+
+load_networks.set_grn_location('/home/ekernf01/Desktop/jhu/research/projects/perturbation_prediction/cell_type_knowledge_transfer/network_collection/networks')
+
+class TestLocationFunctions(unittest.TestCase):
+    def test_location_functions(self):
+      self.assertRaises(load_networks.set_grn_location('nonexistent'))
 
 class TestSimpleFunctions(unittest.TestCase):
     def test_simple_loaders(self):

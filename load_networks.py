@@ -185,15 +185,53 @@ def list_subnetworks(grn_name: str):
   """
   return [f for f in os.listdir(os.path.join(os.environ["GRN_PATH"], grn_name, "networks")) if not f.startswith('.')]
 
+
+def debug_grn_location(path=None):
+  if path is None:
+    path = get_grn_location()
+  print("""This package expects a tree like this:
+    > tree networks
+    networks
+    ├── published_networks.csv 
+    ├── ANANSE_tissue_0.8
+    │   └── networks
+    │       ├── adrenal_gland.parquet
+    │       ├── bone_marrow.parquet
+    │       ├── brain.parquet
+    │       ├── cervix.parquet
+    |       ...
+    ├── cellnet_human_Hg1332
+    │   └── networks
+    │       ├── bcell.parquet
+    │       ├── colon.parquet
+    │       ├── esc.parquet
+    |       ...
+""")
+  print(f"Validating this structure is not yet automated but you can manually compare to `tree {path}`. ")
+  return
+
+def get_grn_location():
+  return os.environ['GRN_PATH']
+   
+def set_grn_location(path: str):
+  if not os.path.isfile(os.path.join(path, "published_networks.csv")):
+    raise FileNotFoundError("published_networks.csv is missing. Try debug_grn_location() for more help.")
+  if not os.path.isfile(os.path.join(path, "cellnet_human_Hg1332", "networks", "bcell.parquet")):
+    print("Checked for an example network and didn't find it; this is a bad sign. Try debug_grn_location() for more help.")
+  os.environ['GRN_PATH'] = path
+  return
+
+
 def load_grn_by_subnetwork( grn_name: str, subnetwork_name: str ):
   """
   Load a given gene regulatory (sub-)network.
   Parameters:
-        - grn_name (string): source to list tissues from
+        - grn_name (str): source to list tissues from
+        - subnetwork_name (str): what subnetwork to use; see list_subnetworks(grn_name) for options
   """
-  grn_location = os.path.join(os.environ["GRN_PATH"], grn_name, "networks", subnetwork_name)
+  grn_location = os.path.join(get_grn_location(), grn_name, "networks", subnetwork_name)
   if not os.path.exists(grn_location):
-    raise ValueError("Error locating grn! Please report this error or check os.environ['GRN_PATH'].\n")
+    raise ValueError("Error locating grn! Please consult debug_grn_location().\n")
   
   X = pd.read_parquet( grn_location ) 
   
@@ -219,15 +257,12 @@ def validate_grn(
 ):
   """Make sure grn conforms to the expected structure."""
   if grn_df is None:
-    grn_df = load_grn_by_subnetwork( grn_name, subnetwork_name )
+    grn_df = load_grn_by_subnetwork( grn_name, subnetwork_name, do_validate=False )
   if len(grn_df[:, "regulator"].unique()) > len(grn_df[:, "target"].unique()):
     raise ValueError("".join([grn_name, " ", subnetwork_name, " has more regulators than targets!\n"]) )
   assert type(grn_df) == pd.DataFrame
-  assert al( [grn_df.columns[i] == EXPECTED_GRN_COLNAMES[i] for i in range(3)])
+  assert all( [grn_df.columns[i] == EXPECTED_GRN_COLNAMES[i] for i in range(3)])
   return True
-
-
-
 
 def networkEdgesToMatrix(networkEdges, regulatorColumn=0, targetColumn=1):
     """Reformat a network from a two-column dataframe to the way that celloracle needs its input."""
@@ -241,7 +276,7 @@ def networkEdgesToMatrix(networkEdges, regulatorColumn=0, targetColumn=1):
     gc.collect()
     return X
 
-humanTFs = pd.read_csv("../accessory_data/humanTFs.csv")
+
 
 def pivotNetworkWideToLong(network_wide: pd.DataFrame):
     """Convert from CellOracle's preferred format to a triplet format
@@ -259,7 +294,7 @@ def pivotNetworkWideToLong(network_wide: pd.DataFrame):
     ])
     return network_long
 
-def makeRandomNetwork(targetGenes, density = 0, seed = 0, TFs = humanTFs['HGNC symbol'] ):
+def makeRandomNetwork(targetGenes, TFs, density = 0, seed = 0):
     """Generate a random network formatted the way that celloracle needs its input."""
     np.random.seed(seed)
     X = pd.DataFrame(
