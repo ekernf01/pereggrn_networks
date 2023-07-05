@@ -11,11 +11,11 @@ load_networks.load_grn_metadata()
 # What tissues do they cover, or how many?
 load_networks.list_subnetworks("gtex_rna")
 [ load_networks.list_subnetworks(n)[0] for n in load_networks.load_grn_metadata()['name'] ]
-# Show me the edges for a tissue. 
+# Show me the edges for a tissue (as a Pandas dataframe). 
 load_networks.load_grn_by_subnetwork("gtex_rna", "Adipose_Subcutaneous.parquet").head()
-# Show me the edges for all tissues in one network.
+# Show me the edges for all tissues in one network (as a Pandas dataframe).
 [load_networks.load_grn_by_subnetwork("gtex_rna", n).shape for n in load_networks.list_subnetworks('gtex_rna') ]
-# Lightweight API
+# Query the edges for a tissue (as a lightweight, read-only interface, without loading the edges into memory)
 load_networks.LightNetwork("gtex_rna").get_regulators("GAPDH")
 load_networks.LightNetwork("gtex_rna", ["Adipose_Subcutaneous.parquet"]).get_regulators("GAPDH")
 ```
