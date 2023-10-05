@@ -264,19 +264,20 @@ def validate_grn(
   assert all( [grn_df.columns[i] == EXPECTED_GRN_COLNAMES[i] for i in range(3)])
   return True
 
-def networkEdgesToMatrix(networkEdges, regulatorColumn=0, targetColumn=1):
-    """Reformat a network from a two-column dataframe to the way that celloracle needs its input."""
+def pivotNetworkLongToWide(networkEdges, regulatorColumn=0, targetColumn=1):
+    """Reformat a network from a two-column dataframe to the way that celloracle needs its input.
+
+    Args: 
+        network_long (pd.DataFrame): GRN structure with columns ['regulator', 'target', 'weight']
+    """
     X = pd.crosstab(networkEdges.iloc[:,targetColumn], networkEdges.iloc[:,regulatorColumn])
     del networkEdges
     gc.collect()
     X = 1.0*(X > 0)
     X = X.rename_axis('gene_short_name').reset_index()
     X = X.rename_axis('peak_id').reset_index()
-    X = makeNetworkSparse(X, 0.0)
     gc.collect()
     return X
-
-
 
 def pivotNetworkWideToLong(network_wide: pd.DataFrame):
     """Convert from CellOracle's preferred format to a triplet format
@@ -313,20 +314,17 @@ def makeRandomNetwork(targetGenes, TFs, density = 0, seed = 0):
     X.reset_index(inplace=True)
     X.rename_axis('peak_id', inplace=True)
     X.reset_index(inplace=True)
-    # CellOracle's preferred format wastes gobs of memory unless you sparsify.
-    X = makeNetworkSparse(X, round(density))
     gc.collect()
     return X
 
+def makeNetworkSparse(network_wide, defaultValue):
+    """Save memory by making a sparse representation of a CellOracle-format base network"""
+    network_wide.iloc[:,2:] = network_wide.iloc[:,2:].astype(pd.SparseDtype("float", defaultValue))
+    return network_wide
 
-def makeNetworkSparse(X, defaultValue):
-    """Save memory by making a sparse representation of a base network"""
-    X.iloc[:,2:] = X.iloc[:,2:].astype(pd.SparseDtype("float", defaultValue))
-    return X
 
-
-def makeNetworkDense(X):
+def makeNetworkDense(network_wide):
     """Undo makeNetworkSparse"""
-    X.iloc[:, 2:] = np.array(X.iloc[:, 2:])   #undo sparse representation         
-    return X
+    network_wide.iloc[:, 2:] = np.array(network_wide.iloc[:, 2:])   #undo sparse representation         
+    return network_wide
 
