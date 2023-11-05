@@ -21,7 +21,7 @@ class LightNetwork:
     files:list = [],
     df: pd.DataFrame = None,
   ):
-    """Create a Network object. 
+    """Create a LightNetwork object. 
 
     Args:
         grn_name (str, optional): source of networks, e.g. "celloracle_human"
@@ -189,7 +189,11 @@ def list_subnetworks(grn_name: str):
 def debug_grn_location(path=None):
   if path is None:
     path = get_grn_location()
-  print("""This package expects a tree like this:
+
+  print(f"""
+    GRN location is currently set to {path}.
+    Set it using load_networks.set_grn_location().
+    This package expects a folder structure like this:
     > tree networks
     networks
     ├── published_networks.csv 
@@ -215,7 +219,7 @@ def get_grn_location():
    
 def set_grn_location(path: str):
   if not os.path.isfile(os.path.join(path, "published_networks.csv")):
-    raise FileNotFoundError("published_networks.csv is missing. Try debug_grn_location() for more help.")
+    raise FileNotFoundError("published_networks.csv is missing. Try load_networks.debug_grn_location() for more help.")
   if not os.path.isfile(os.path.join(path, "cellnet_human_Hg1332", "networks", "bcell.parquet")):
     print("Checked for an example network and didn't find it; this is a bad sign. Try debug_grn_location() for more help.")
   os.environ['GRN_PATH'] = path
