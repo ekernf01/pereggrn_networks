@@ -20,5 +20,10 @@ load_networks.load_grn_by_subnetwork("gtex_rna", "Adipose_Subcutaneous.parquet")
 # Query the edges for a tissue (as a lightweight, read-only interface, without loading the edges into memory)
 load_networks.LightNetwork("gtex_rna").get_regulators("GAPDH")
 load_networks.LightNetwork("gtex_rna", ["Adipose_Subcutaneous.parquet"]).get_regulators("GAPDH")
+# Create a new LightNetwork object from your own parquet files or pandas dataframes
+import pandas as pd
+load_networks.LightNetwork(df = pd.DataFrame({"regulator": ["a"], "target": ["b"], "weight": [-1]}))
+load_networks.LightNetwork(files = ["path/to/my/network.parquet","path/to/my/other/network.parquet"])
+help(load_networks.LightNetwork)
 ```
 
