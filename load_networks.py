@@ -170,7 +170,10 @@ class LightNetwork:
     
 def load_grn_metadata( complete_only = True ):
   """Load metadata on GRN sources."""
-  metadata_df = pd.read_csv(os.path.join(os.environ["GRN_PATH"], "published_networks.csv"))
+  try:
+      metadata_df = pd.read_csv(os.path.join(os.environ["GRN_PATH"], "published_networks.csv"))
+  except (KeyError,FileNotFoundError):
+      raise FileNotFoundError("Network data files not found. Please run load_networks.debug_grn_location().")
   metadata_df.index = metadata_df["name"]
   if complete_only: 
     metadata_df = metadata_df.loc[metadata_df['is_ready'] == "yes",:]
@@ -183,7 +186,11 @@ def list_subnetworks(grn_name: str):
         - grn_name (string) source to list tissues from
   Return value: pd.DataFrame
   """
-  return [f for f in os.listdir(os.path.join(os.environ["GRN_PATH"], grn_name, "networks")) if not f.startswith('.')]
+  try:
+    subnets = [f for f in os.listdir(os.path.join(os.environ["GRN_PATH"], grn_name, "networks")) if not f.startswith('.')]
+  except (KeyError,FileNotFoundError):
+    raise FileNotFoundError("Network data files not found. Please run load_networks.debug_grn_location().")
+  return subnets
 
 
 def debug_grn_location(path=None):
@@ -235,7 +242,7 @@ def load_grn_by_subnetwork( grn_name: str, subnetwork_name: str ):
   """
   grn_location = os.path.join(get_grn_location(), grn_name, "networks", subnetwork_name)
   if not os.path.exists(grn_location):
-    raise ValueError("Error locating grn! Please consult debug_grn_location().\n")
+    raise ValueError("Network data files not found. Please run load_networks.debug_grn_location().\n")
   
   X = pd.read_parquet( grn_location ) 
   
@@ -332,3 +339,49 @@ def makeNetworkDense(network_wide):
     network_wide.iloc[:, 2:] = np.array(network_wide.iloc[:, 2:])   #undo sparse representation         
     return network_wide
 
+
+def get_subnets(netName:str, subnets:list = "all", target_genes = None, do_aggregate_subnets = False) -> dict:
+    """Get gene regulatory networks, possibly aggregating sub-networks and possibly including non-informative (empty, fully connected, or random) networks.
+    This function is somewhat redundant with load_grn_all_subnetworks and load_grn_by_subnetwork, but it is better tailored for our benchmarking framework.
+
+    Args:
+        netName (str): Name of network to pull from collection, or "dense" or e.g. "random0.123" for random with density 12.3%. 
+        subnets (list, optional): List of cell type- or tissue-specific subnetworks to include. 
+        do_aggregate_subnets (bool, optional): If True, the returned dict has just one network named netName. If False,
+            then the return value contains many separate networks named like netName + " " + subnet_name.
+
+    Returns:
+        dict: A dict containing LightNetwork objects representing gene regulatory networks. 
+    """
+    print("Getting network '" + netName + "'")
+    gc.collect()
+    if "random" in netName:
+        networks = { 
+            netName: LightNetwork(
+                df = pivotNetworkWideToLong( 
+                    makeRandomNetwork( target_genes = target_genes, density = float( netName[6:] ) ) 
+                ) 
+            )
+        }
+    elif "empty" == netName or "dense" == netName:
+        networks = { 
+            netName: LightNetwork(df=pd.DataFrame(index=[], columns=["regulator", "target", "weight"]))
+        }
+        if "dense"==netName:
+            print("WARNING: for 'dense' network, returning an empty network. In GRN.fit(), use network_prior='ignore'. ")
+    else:            
+        networks = {}
+        if do_aggregate_subnets:
+            new_key = netName 
+            if subnets[0]=="all":
+                networks[new_key] = LightNetwork(netName)
+            else:
+                networks[new_key] = LightNetwork(netName, subnets)
+        else:
+            for subnet_name in subnets:
+                new_key = netName + " " + subnet_name
+                if subnets[0]=="all":
+                    networks[new_key] = LightNetwork(netName)
+                else:
+                    networks[new_key] = LightNetwork(netName, [subnet_name])
+    return networks
