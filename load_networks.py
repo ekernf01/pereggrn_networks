@@ -103,6 +103,32 @@ class LightNetwork:
       df=self.df
       results_from_memory = con.execute(f"SELECT * FROM df WHERE target = '{target}'").df()
     return pd.concat([results_from_parquet, results_from_memory])
+  
+  def get_targets(self, regulator: str) -> pd.DataFrame: 
+    """Return all records having a given regulator.
+
+    Args:
+        regulator (str): A regulator present in this network. 
+
+    Returns:
+        pd.DataFrame: All records with the given regulator
+    """
+    results_from_parquet = pd.DataFrame()
+    results_from_memory  = pd.DataFrame()
+    if len(self.files) > 0:
+      files_formatted = [f"'{file}'" for file in self.files]
+      results_from_parquet = duckdb.query(
+        " UNION ".join(
+            [
+              f"SELECT * FROM {file} WHERE regulator = '{regulator}'" for file in files_formatted
+            ]
+          )
+      ).df()
+    if not self.df is None:
+      con = duckdb.connect()
+      df=self.df
+      results_from_memory = con.execute(f"SELECT * FROM df WHERE regulator = '{regulator}'").df()
+    return pd.concat([results_from_parquet, results_from_memory])
     
   def get_all_regulators(self) -> set: 
     """Return a set of all regulators
@@ -340,7 +366,7 @@ def makeNetworkDense(network_wide):
     return network_wide
 
 
-def get_subnets(netName:str, subnets:list = "all", target_genes = None, do_aggregate_subnets = False) -> dict:
+def get_subnets(netName:str, subnets:list = [], target_genes = None, do_aggregate_subnets = False) -> dict:
     """Get gene regulatory networks, possibly aggregating sub-networks and possibly including non-informative (empty, fully connected, or random) networks.
     This function is somewhat redundant with load_grn_all_subnetworks and load_grn_by_subnetwork, but it is better tailored for our benchmarking framework.
 
@@ -373,15 +399,13 @@ def get_subnets(netName:str, subnets:list = "all", target_genes = None, do_aggre
         networks = {}
         if do_aggregate_subnets:
             new_key = netName 
-            if subnets[0]=="all":
-                networks[new_key] = LightNetwork(netName)
-            else:
-                networks[new_key] = LightNetwork(netName, subnets)
+            if len(subnets)==0:
+                subnets = list_subnetworks(netName)
+            networks[new_key] = LightNetwork(netName, subnets)
         else:
+            if len(subnets)==0:
+                subnets = list_subnetworks(netName)
             for subnet_name in subnets:
                 new_key = netName + " " + subnet_name
-                if subnets[0]=="all":
-                    networks[new_key] = LightNetwork(netName)
-                else:
-                    networks[new_key] = LightNetwork(netName, [subnet_name])
+                networks[new_key] = LightNetwork(netName, [subnet_name])
     return networks
