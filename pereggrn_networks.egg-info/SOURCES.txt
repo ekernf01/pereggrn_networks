@@ -1,0 +1,7 @@
+README.md
+setup.py
+pereggrn_networks.egg-info/PKG-INFO
+pereggrn_networks.egg-info/SOURCES.txt
+pereggrn_networks.egg-info/dependency_links.txt
+pereggrn_networks.egg-info/requires.txt
+pereggrn_networks.egg-info/top_level.txt

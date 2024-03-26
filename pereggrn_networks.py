@@ -26,10 +26,12 @@ class LightNetwork:
     Args:
         grn_name (str, optional): source of networks, e.g. "celloracle_human"
         subnetwork_name (list, optional): filename for individual network (usually networks are grouped by cell/tissue type).
+            If the empty list is passed, all available subnetworks will be used.
         files (list, optional): List of absolute paths to parquet files. 
             These files will be queried in addition to the stuff already specified.
         df (pd.DataFrame, optional): This DF will be queried in addition to the stuff already specified.
     """
+    assert isinstance(subnetwork_names, list), "subnetwork_names must be a list, even if it only contains one item."
     if grn_name is None and len(subnetwork_names) > 0:
       raise ValueError("Cannot find subnetworks unless 'grn_name' is specified.")
     if grn_name is not None:
@@ -43,6 +45,9 @@ class LightNetwork:
       assert len(df.columns)==3 or df.columns[3]=='cell_type', "If there are 4 columns, the 4th must be 'cell_type'."
     self.files = files
     self.df = df
+    for f in self.files:
+      if not os.path.exists(f):
+        raise FileNotFoundError(f"File {f} does not exist.")
     return
 
   def __str__(self):
@@ -364,48 +369,3 @@ def makeNetworkDense(network_wide):
     """Undo makeNetworkSparse"""
     network_wide.iloc[:, 2:] = np.array(network_wide.iloc[:, 2:])   #undo sparse representation         
     return network_wide
-
-
-def get_subnets(netName:str, subnets:list = [], target_genes = None, do_aggregate_subnets = False) -> dict:
-    """Get gene regulatory networks, possibly aggregating sub-networks and possibly including non-informative (empty, fully connected, or random) networks.
-    This function is somewhat redundant with load_grn_all_subnetworks and load_grn_by_subnetwork, but it is better tailored for our benchmarking framework.
-
-    Args:
-        netName (str): Name of network to pull from collection, or "dense" or e.g. "random0.123" for random with density 12.3%. 
-        subnets (list, optional): List of cell type- or tissue-specific subnetworks to include. 
-        do_aggregate_subnets (bool, optional): If True, the returned dict has just one network named netName. If False,
-            then the return value contains many separate networks named like netName + " " + subnet_name.
-
-    Returns:
-        dict: A dict containing LightNetwork objects representing gene regulatory networks. 
-    """
-    print("Getting network '" + netName + "'")
-    gc.collect()
-    if "random" in netName:
-        networks = { 
-            netName: LightNetwork(
-                df = pivotNetworkWideToLong( 
-                    makeRandomNetwork( target_genes = target_genes, density = float( netName[6:] ) ) 
-                ) 
-            )
-        }
-    elif "empty" == netName or "dense" == netName:
-        networks = { 
-            netName: LightNetwork(df=pd.DataFrame(index=[], columns=["regulator", "target", "weight"]))
-        }
-        if "dense"==netName:
-            print("WARNING: for 'dense' network, returning an empty network. In GRN.fit(), use network_prior='ignore'. ")
-    else:            
-        networks = {}
-        if do_aggregate_subnets:
-            new_key = netName 
-            if len(subnets)==0:
-                subnets = list_subnetworks(netName)
-            networks[new_key] = LightNetwork(netName, subnets)
-        else:
-            if len(subnets)==0:
-                subnets = list_subnetworks(netName)
-            for subnet_name in subnets:
-                new_key = netName + " " + subnet_name
-                networks[new_key] = LightNetwork(netName, [subnet_name])
-    return networks
