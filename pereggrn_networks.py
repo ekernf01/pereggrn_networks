@@ -220,7 +220,7 @@ def list_subnetworks(grn_name: str):
   try:
     subnets = [f for f in os.listdir(os.path.join(os.environ["GRN_PATH"], grn_name, "networks")) if not f.startswith('.')]
   except (KeyError,FileNotFoundError):
-    raise FileNotFoundError("Network data files not found. Please run load_networks.debug_grn_location().")
+    raise FileNotFoundError("Network data files not found. Either the name of the network is wrong, or the path to the whole collection is wrong. For the former, try pereggrn_networks.load_grn_metadata or pereggrn_networks.list_subnetworks. For the latter, try pereggrn_networks.debug_grn_location.")
   return subnets
 
 
