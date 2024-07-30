@@ -4,7 +4,7 @@ This module defines a `LightNetwork` object. This is a thin wrapper around duckd
 
 ### Installation
 
-pip install git+https://github.com/ekernf01/pereggrn_networks.git
+`pip install git+https://github.com/ekernf01/pereggrn_networks.git`
 
 ### Usage
 
