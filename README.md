@@ -2,6 +2,10 @@ Efficiently load and manipulate gene regulatory networks in Python. Built for [o
 
 This module defines a `LightNetwork` object. This is a thin wrapper around duckdb, which is used to query Parquet files (on disk), Pandas DataFrames (in memory), or some combination thereof. The main purpose is to avoid copying/instantiating a whole database of network edges in RAM. Instead we just store the names of relevant files on disk, and we read individual records as needed. See the network collection to learn how the data are formatted or how to add your own networks.
 
+### Installation
+
+pip install git+https://github.com/ekernf01/pereggrn_networks.git
+
 ### Usage
 
 ```python
