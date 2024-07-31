@@ -13,7 +13,6 @@ setup(
     #url
     author='Eric Kernfeld',
     author_email='eric.kern13@gmail.com',
-    packages=find_packages(),
     install_requires=[
         "pandas",
         "duckdb",
