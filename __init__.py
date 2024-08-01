@@ -1,1 +1,1 @@
-from .src.pereggrn_networks import *
+from .pereggrn_networks import *

@@ -1,1 +1,7 @@
 __pycache__*
+*egg-info*/
+PKG-INFO
+SOURCES.txt
+dependency_links.txt
+requires.txt
+top_level.txt

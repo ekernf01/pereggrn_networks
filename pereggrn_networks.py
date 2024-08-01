@@ -220,7 +220,7 @@ def list_subnetworks(grn_name: str):
   try:
     subnets = [f for f in os.listdir(os.path.join(os.environ["GRN_PATH"], grn_name, "networks")) if not f.startswith('.')]
   except (KeyError,FileNotFoundError):
-    raise FileNotFoundError("Network data files not found. Either the name of the network is wrong, or the path to the whole collection is wrong. For the former, try pereggrn_networks.load_grn_metadata or pereggrn_networks.list_subnetworks. For the latter, try pereggrn_networks.debug_grn_location.")
+    raise FileNotFoundError("Network data files not found. Try checking: \n- pereggrn_networks.load_grn_metadata() or pereggrn_networks.list_subnetworks() for network names, \n- pereggrn_networks.debug_grn_location() or pereggrn_networks.set_grn_path() for the path to the collection.")
   return subnets
 
 
@@ -273,8 +273,8 @@ def load_grn_by_subnetwork( grn_name: str, subnetwork_name: str ):
   """
   grn_location = os.path.join(get_grn_location(), grn_name, "networks", subnetwork_name)
   if not os.path.exists(grn_location):
-    raise ValueError("Network data files not found. Please run load_networks.debug_grn_location().\n")
-  
+    raise FileNotFoundError("Network data files not found. Try checking: \n- pereggrn_networks.load_grn_metadata() or pereggrn_networks.list_subnetworks() for network names, \n- pereggrn_networks.debug_grn_location() or pereggrn_networks.set_grn_path() for the path to the collection.")
+
   X = pd.read_parquet( grn_location ) 
   
   # add score of -1 if missing
