@@ -6,11 +6,11 @@ with open('README.md', 'r', encoding='utf-8') as fh:
 
 setup(
     name='pereggrn_networks',
+	py_modules=['pereggrn_networks'],
     version='0.0.1',
     description='Efficiently load and manipulate gene regulatory networks',
     long_description=long_description,
 	long_description_content_type='text/markdown',
-    #url
     author='Eric Kernfeld',
     author_email='eric.kern13@gmail.com',
     install_requires=[
