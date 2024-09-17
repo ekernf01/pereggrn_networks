@@ -54,10 +54,13 @@ class LightNetwork:
       files_report = ""
       df_report = ""
       if len(self.files) > 0:
-          files_report = "\n files: \n" + "\n".join(self.files)
+          files_report = "\n files: \n" + '\n  '.join(self.files)
       if self.df is not None:
           df_report = f"\n dataframe of shape {self.df.shape}"
       return "LightNetwork built on " + files_report + df_report
+
+  def copy(self):
+    return LightNetwork(files = self.files, df = self.df)
 
   def save(self, filename) -> None:
     if not filename.lower().endswith(".parquet"):
